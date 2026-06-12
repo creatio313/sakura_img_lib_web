@@ -778,45 +778,51 @@ export default function Home() {
           </button>
         </div>
 
-        <div className="task-grid">
-          {aiTasks.map((task) => (
-            <article key={task.id} className="task-card">
-              <h3>{task.name || task.id}</h3>
-              <p className="meta">
-                ステータス： <strong>{task.status}</strong>
-              </p>
-              {task.errorMessage && (
-                <p className="error-text">エラー： {task.errorMessage}</p>
-              )}
-              <p className="meta">タスクID： {task.id}</p>
-              <p className="meta">作成日時： {task.createdAt ?? "-"}</p>
-
-              <div className="task-subblock">
-                <p className="meta strong">成果物</p>
-                {!task.artifact && <p className="meta">なし</p>}
-                {task.artifact ? (
-                  <p className="meta mono">
-                    {task.artifact.filename} (
-                    {task.artifact.sizeBytes.toLocaleString()} バイト)
-                    {task.artifact.downloadUrl ? (
-                      <>
-                        {" "}
-                        -{" "}
-                        <a
-                          href={task.artifact.downloadUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          ダウンロード
-                        </a>
-                      </>
-                    ) : null}
-                  </p>
-                ) : null}
-              </div>
-            </article>
-          ))}
-        </div>
+        <table className="task-table">
+          <thead>
+            <tr>
+              <th>タスク名</th>
+              <th>ステータス</th>
+              <th>作成日時</th>
+              <th>成果物</th>
+            </tr>
+          </thead>
+          <tbody>
+            {aiTasks.map((task) => (
+              <tr key={task.id}>
+                <td>{task.name || task.id}</td>
+                <td>
+                  <strong>{task.status}</strong>
+                </td>
+                <td>
+                  {task.createdAt
+                    ? new Date(task.createdAt).toLocaleString("ja-JP", {
+                        year: "numeric",
+                        month: "2-digit",
+                        day: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        second: "2-digit",
+                      })
+                    : "-"}
+                </td>
+                <td>
+                  {task.artifact?.downloadUrl ? (
+                    <a
+                      href={task.artifact.downloadUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {task.artifact.filename}
+                    </a>
+                  ) : (
+                    <span>-</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </section>
 
       {modalType && (

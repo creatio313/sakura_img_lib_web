@@ -98,7 +98,7 @@ func withJSONOnly(next http.Handler) http.Handler {
 		if r.Method == http.MethodPost {
 			contentType := r.Header.Get("Content-Type")
 			if !strings.HasPrefix(contentType, "application/json") {
-				writeJSON(w, http.StatusUnsupportedMediaType, errorResponse{Error: "Content-Type must be application/json"})
+				writeJSON(w, http.StatusUnsupportedMediaType, errorResponse{Error: "Content-Typeはapplication/jsonである必要があります。"})
 				return
 			}
 		}

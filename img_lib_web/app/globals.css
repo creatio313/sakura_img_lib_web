@@ -219,37 +219,39 @@ button:disabled {
   font-size: 0.75rem;
   margin-bottom: 0.5rem;
 }
-/*** ギャラリーのタスク一覧部分 ***/
-.task-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 0.8rem;
-}
-
-.task-card {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 0.7rem;
-  background: var(--card);
-}
-
-.task-card h3 {
-  font-size: 0.94rem;
-  margin-bottom: 0.35rem;
-}
-
-.task-subblock {
-  margin-top: 0.55rem;
-}
 
 .strong {
   font-weight: 700;
 }
-/*** アーティファクト表示 ***/
-.mono {
-  font-family: var(--font-geist-mono), monospace;
-  word-break: break-all;
+
+/*** タスク一覧テーブル ***/
+.task-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card);
+  border-radius: 12px;
+  overflow: hidden;
 }
+
+.task-table th {
+  background: var(--paper);
+  color: var(--foreground);
+  text-align: left;
+  padding: 0.7rem;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.task-table td {
+  padding: 0.7rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+
+.task-table tr:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
 /*** モーダル表示 ***/
 .modal-backdrop {
   position: fixed;

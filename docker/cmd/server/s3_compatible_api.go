@@ -104,7 +104,7 @@ func (s *apiServer) handleSearchObjects(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	if strings.TrimSpace(req.Region) == "" {
-		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "リージョンは必須項目です。。"})
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "リージョンは必須項目です。"})
 		return
 	}
 	if req.Bucket == "" {
