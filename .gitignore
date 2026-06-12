@@ -43,3 +43,6 @@ img_lib_web/.vercel
 # typescript
 *.tsbuildinfo
 img_lib_web/next-env.d.ts
+
+#メモ
+構築ノート.txt
