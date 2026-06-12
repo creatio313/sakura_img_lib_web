@@ -41,6 +41,8 @@ func main() {
 	//S3互換APIプロキシ
 	mux.HandleFunc("/api/v1/objects/search", srv.handleSearchObjects)
 	mux.HandleFunc("/api/v1/objects/preview-url", srv.handleCreatePreviewURL)
+	mux.HandleFunc("/api/v1/objects/upload", srv.handleUploadObject)
+	mux.HandleFunc("/api/v1/objects/rename-key", srv.handleRenameObjectKey)
 	mux.HandleFunc("/api/v1/objects/delete", srv.handleDeleteObjects)
 	//高火力 DOKおよびAI関連APIプロキシ
 	mux.HandleFunc("/api/v1/ai/tasks", srv.handleListTaggedAITasks)

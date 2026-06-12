@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -29,8 +32,9 @@ type searchObjectsRequest struct {
 	MaxKeys           int32  `json:"maxKeys,omitempty"`
 	ContinuationToken string `json:"continuationToken,omitempty"`
 	//SiteIDは、将来的に複数サイト対応やアクセス制御のために利用する可能性があるため、リクエストに含める形で定義しておく。
-	SiteID            string `json:"siteId"`
+	SiteID string `json:"siteId"`
 }
+
 // クライアントの署名付きURL要求パラメータを定義する構造体
 type createPreviewURLRequest struct {
 	AccessKeyID     string `json:"accessKeyId"`
@@ -41,8 +45,32 @@ type createPreviewURLRequest struct {
 	Key             string `json:"key"`
 	ExpiresSeconds  int64  `json:"expiresSeconds,omitempty"`
 	//SiteIDは、将来的に複数サイト対応やアクセス制御のために利用する可能性があるため、リクエストに含める形で定義しておく。
+	SiteID string `json:"siteId"`
+}
+
+type uploadObjectRequest struct {
+	AccessKeyID     string `json:"accessKeyId"`
+	SecretAccessKey string `json:"secretAccessKey"`
+	Region          string `json:"region"`
+	S3Endpoint      string `json:"s3Endpoint,omitempty"`
+	Bucket          string `json:"bucket"`
+	Key             string `json:"key"`
+	DataBase64      string `json:"dataBase64"`
+	ContentType     string `json:"contentType,omitempty"`
 	SiteID          string `json:"siteId"`
 }
+
+type renameObjectKeyRequest struct {
+	AccessKeyID     string `json:"accessKeyId"`
+	SecretAccessKey string `json:"secretAccessKey"`
+	Region          string `json:"region"`
+	S3Endpoint      string `json:"s3Endpoint,omitempty"`
+	Bucket          string `json:"bucket"`
+	OldKey          string `json:"oldKey"`
+	NewKey          string `json:"newKey"`
+	SiteID          string `json:"siteId"`
+}
+
 // クライアントのオブジェクト削除要求パラメータを定義する構造体
 type deleteObjectsRequest struct {
 	AccessKeyID     string   `json:"accessKeyId"`
@@ -52,8 +80,9 @@ type deleteObjectsRequest struct {
 	Bucket          string   `json:"bucket"`
 	Keys            []string `json:"keys"`
 	//SiteIDは、将来的に複数サイト対応やアクセス制御のために利用する可能性があるため、リクエストに含める形で定義しておく。
-	SiteID          string   `json:"siteId"`
+	SiteID string `json:"siteId"`
 }
+
 // 検索結果応答
 type searchObjectsResponse struct {
 	Bucket                string        `json:"bucket"`
@@ -66,6 +95,7 @@ type searchObjectsResponse struct {
 	SupportedExtensions   []string      `json:"supportedExtensions"`
 	EndpointUsed          string        `json:"endpointUsed"`
 }
+
 // 個別の画像オブジェクトを表す構造体
 type imageObject struct {
 	Key          string `json:"key"`
@@ -73,6 +103,7 @@ type imageObject struct {
 	Size         int64  `json:"size"`
 	ETag         string `json:"etag,omitempty"`
 }
+
 // 署名付きURLを含む応答
 type createPreviewURLResponse struct {
 	Bucket       string `json:"bucket"`
@@ -82,6 +113,22 @@ type createPreviewURLResponse struct {
 	ContentType  string `json:"contentType"`
 	EndpointUsed string `json:"endpointUsed"`
 }
+
+type uploadObjectResponse struct {
+	Bucket       string `json:"bucket"`
+	Key          string `json:"key"`
+	Size         int    `json:"size"`
+	ContentType  string `json:"contentType"`
+	EndpointUsed string `json:"endpointUsed"`
+}
+
+type renameObjectKeyResponse struct {
+	Bucket       string `json:"bucket"`
+	OldKey       string `json:"oldKey"`
+	NewKey       string `json:"newKey"`
+	EndpointUsed string `json:"endpointUsed"`
+}
+
 // S3互換APIを利用して指定されたバケット内の画像オブジェクトを検索して返却する。
 func (s *apiServer) handleSearchObjects(w http.ResponseWriter, r *http.Request) {
 	/***
@@ -141,7 +188,7 @@ func (s *apiServer) handleSearchObjects(w http.ResponseWriter, r *http.Request) 
 	query := strings.ToLower(strings.TrimSpace(req.Query))
 	// 返却するオブジェクト変数
 	objects := make([]imageObject, 0, len(out.Contents))
-	
+
 	// 取得したオブジェクトをフィルタリング
 	for _, obj := range out.Contents {
 		if obj.Key == nil {
@@ -188,6 +235,162 @@ func (s *apiServer) handleSearchObjects(w http.ResponseWriter, r *http.Request) 
 	}
 
 	writeJSON(w, http.StatusOK, resp)
+}
+
+// S3互換APIを利用して画像オブジェクトをアップロードするハンドラ関数。
+func (s *apiServer) handleUploadObject(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeMethodNotAllowed(w)
+		return
+	}
+
+	var req uploadObjectRequest
+	if err := decodeJSONBody(r, &req); err != nil {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: err.Error()})
+		return
+	}
+
+	if req.AccessKeyID == "" || req.SecretAccessKey == "" {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "アクセスキーIDとシークレットアクセスキーは必須項目です。"})
+		return
+	}
+	if strings.TrimSpace(req.Region) == "" {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "リージョンは必須項目です。"})
+		return
+	}
+	if strings.TrimSpace(req.Bucket) == "" {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "バケット名は必須項目です。"})
+		return
+	}
+
+	key := strings.TrimSpace(req.Key)
+	if key == "" {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "オブジェクトキーは必須項目です。"})
+		return
+	}
+	if !isSupportedImage(key) {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "サポートされている画像形式である必要があります（.jpg, .jpeg, .png, .gif, .webp）。"})
+		return
+	}
+
+	payload := strings.TrimSpace(req.DataBase64)
+	if payload == "" {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "アップロードデータが指定されていません。"})
+		return
+	}
+
+	rawData, err := base64.StdEncoding.DecodeString(payload)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "アップロードデータのデコードに失敗しました。"})
+		return
+	}
+
+	contentType := strings.TrimSpace(req.ContentType)
+	if contentType == "" {
+		contentType = detectImageContentType(key)
+	}
+
+	ctx := r.Context()
+	s3Client, endpoint, err := newS3Client(ctx, req.AccessKeyID, req.SecretAccessKey, req.Region, req.S3Endpoint)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: err.Error()})
+		return
+	}
+
+	_, err = s3Client.PutObject(ctx, &s3.PutObjectInput{
+		Bucket:      aws.String(req.Bucket),
+		Key:         aws.String(key),
+		Body:        bytes.NewReader(rawData),
+		ContentType: aws.String(contentType),
+	})
+	if err != nil {
+		writeJSON(w, http.StatusBadGateway, errorResponse{Error: fmt.Sprintf("S3互換APIでのオブジェクトアップロードに失敗しました。エンドポイント %s： %v", endpoint, err)})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, uploadObjectResponse{
+		Bucket:       req.Bucket,
+		Key:          key,
+		Size:         len(rawData),
+		ContentType:  contentType,
+		EndpointUsed: endpoint,
+	})
+}
+
+// S3互換APIを利用してオブジェクトキーを変更するハンドラ関数。
+func (s *apiServer) handleRenameObjectKey(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeMethodNotAllowed(w)
+		return
+	}
+
+	var req renameObjectKeyRequest
+	if err := decodeJSONBody(r, &req); err != nil {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: err.Error()})
+		return
+	}
+
+	if req.AccessKeyID == "" || req.SecretAccessKey == "" {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "アクセスキーIDとシークレットアクセスキーは必須項目です。"})
+		return
+	}
+	if strings.TrimSpace(req.Region) == "" {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "リージョンは必須項目です。"})
+		return
+	}
+	if strings.TrimSpace(req.Bucket) == "" {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "バケット名は必須項目です。"})
+		return
+	}
+
+	oldKey := strings.TrimSpace(req.OldKey)
+	newKey := strings.TrimSpace(req.NewKey)
+	if oldKey == "" || newKey == "" {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "変更前キーと変更後キーは必須項目です。"})
+		return
+	}
+	if oldKey == newKey {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "変更前キーと変更後キーが同じです。"})
+		return
+	}
+	if !isSupportedImage(oldKey) || !isSupportedImage(newKey) {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "サポートされている画像形式である必要があります（.jpg, .jpeg, .png, .gif, .webp）。"})
+		return
+	}
+
+	ctx := r.Context()
+	s3Client, endpoint, err := newS3Client(ctx, req.AccessKeyID, req.SecretAccessKey, req.Region, req.S3Endpoint)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: err.Error()})
+		return
+	}
+
+	copySource := buildS3CopySource(req.Bucket, oldKey)
+	_, err = s3Client.CopyObject(ctx, &s3.CopyObjectInput{
+		Bucket:     aws.String(req.Bucket),
+		Key:        aws.String(newKey),
+		CopySource: aws.String(copySource),
+	})
+	if err != nil {
+		writeJSON(w, http.StatusBadGateway, errorResponse{Error: fmt.Sprintf("S3互換APIでのオブジェクト複製に失敗しました。エンドポイント %s： %v", endpoint, err)})
+		return
+	}
+
+	_, err = s3Client.DeleteObject(ctx, &s3.DeleteObjectInput{
+		Bucket: aws.String(req.Bucket),
+		Key:    aws.String(oldKey),
+	})
+	if err != nil {
+		writeJSON(w, http.StatusBadGateway, errorResponse{Error: fmt.Sprintf("S3互換APIでの旧キー削除に失敗しました。エンドポイント %s： %v", endpoint, err)})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, renameObjectKeyResponse{
+		Bucket:       req.Bucket,
+		OldKey:       oldKey,
+		NewKey:       newKey,
+		EndpointUsed: endpoint,
+	})
 }
 
 // S3互換APIを利用して指定された画像オブジェクトのプレビューURLを生成するハンドラ関数。
@@ -371,4 +574,13 @@ func optionalStringPtr(v string) *string {
 		return nil
 	}
 	return aws.String(v)
+}
+
+// CopyObjectのcopy source指定形式に合わせて、バケット名とキーをURLエンコードして連結する。
+func buildS3CopySource(bucket, key string) string {
+	parts := strings.Split(key, "/")
+	for i, p := range parts {
+		parts[i] = url.PathEscape(p)
+	}
+	return bucket + "/" + strings.Join(parts, "/")
 }

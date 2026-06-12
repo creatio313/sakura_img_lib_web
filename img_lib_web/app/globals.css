@@ -213,6 +213,28 @@ button:disabled {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.key-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  width: 100%;
+}
+
+.key-row span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.icon-button {
+  border-radius: 6px;
+  background: transparent;
+  padding: 0.15rem;
+  line-height: 0;
+  flex-shrink: 0;
+}
+
 /*** 画像選択件数表示や容量など汎用小項目表示 ***/
 .meta {
   color: var(--foreground);

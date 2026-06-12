@@ -51,6 +51,19 @@ type DeleteObjectsResponse = {
   count: number;
 };
 
+type UploadObjectResponse = {
+  bucket: string;
+  key: string;
+  size: number;
+  contentType: string;
+};
+
+type RenameObjectKeyResponse = {
+  bucket: string;
+  oldKey: string;
+  newKey: string;
+};
+
 type AITaskCreateResponse = {
   taskId: string;
   name?: string;
@@ -99,7 +112,7 @@ type AITaskListResponse = {
   tasks: AITaskItem[];
 };
 
-type ModalType = "generate" | "edit" | "superres" | null;
+type ModalType = "upload" | "generate" | "edit" | "superres" | "rename" | null;
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
@@ -136,11 +149,15 @@ export default function Home() {
 
   const [modalType, setModalType] = useState<ModalType>(null);
   const [modalOutputBucket, setModalOutputBucket] = useState("");
+  const [modalUploadFile, setModalUploadFile] = useState<File | null>(null);
+  const [modalUploadKey, setModalUploadKey] = useState("");
   const [modalPrefix, setModalPrefix] = useState("AI生成画像");
   const [modalPrompt, setModalPrompt] = useState("");
   const [modalSuffix, setModalSuffix] = useState("");
   const [modalBatch, setModalBatch] = useState(1);
   const [modalScale, setModalScale] = useState(4);
+  const [renameTargetKey, setRenameTargetKey] = useState("");
+  const [modalNewKey, setModalNewKey] = useState("");
 
   const [aiTasks, setAiTasks] = useState<AITaskItem[]>([]);
 
@@ -163,6 +180,28 @@ export default function Home() {
 
   const siteLabel = (site: Site) =>
     site.displayNameJa ?? site.displayName ?? site.displayNameEnUs ?? site.id;
+
+  function fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result;
+        if (typeof result !== "string") {
+          reject(new Error("ファイルの読み込みに失敗しました。"));
+          return;
+        }
+        const commaIndex = result.indexOf(",");
+        if (commaIndex < 0) {
+          reject(new Error("ファイルデータ形式が不正です。"));
+          return;
+        }
+        resolve(result.slice(commaIndex + 1));
+      };
+      reader.onerror = () =>
+        reject(new Error("ファイルの読み込みに失敗しました。"));
+      reader.readAsDataURL(file);
+    });
+  }
 
   async function fetchSitesAndBuckets() {
     setError("");
@@ -387,18 +426,102 @@ export default function Home() {
     }
   }
 
+  async function uploadImageObject() {
+    if (!modalUploadFile) {
+      throw new Error("アップロードファイルを選択してください。");
+    }
+
+    const uploadKey = modalUploadKey.trim();
+    if (!uploadKey) {
+      throw new Error("アップロード先キーを入力してください。");
+    }
+
+    const dataBase64 = await fileToBase64(modalUploadFile);
+    const response = await fetch(`${API_BASE_URL}/api/v1/objects/upload`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        accessKeyId,
+        secretAccessKey,
+        siteId,
+        region,
+        s3Endpoint,
+        bucket,
+        key: uploadKey,
+        dataBase64,
+        contentType: modalUploadFile.type,
+      }),
+    });
+
+    const data = (await response.json()) as UploadObjectResponse & {
+      error?: string;
+    };
+    if (!response.ok) {
+      throw new Error(data.error ?? "画像アップロードに失敗しました。");
+    }
+
+    setStatus(`画像を追加しました: ${data.key}`);
+    await searchObjects();
+  }
+
+  async function renameImageKey() {
+    const oldKey = renameTargetKey.trim();
+    const newKey = modalNewKey.trim();
+    if (!oldKey || !newKey) {
+      throw new Error("変更前キーと変更後キーを入力してください。");
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/v1/objects/rename-key`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        accessKeyId,
+        secretAccessKey,
+        siteId,
+        region,
+        s3Endpoint,
+        bucket,
+        oldKey,
+        newKey,
+      }),
+    });
+
+    const data = (await response.json()) as RenameObjectKeyResponse & {
+      error?: string;
+    };
+    if (!response.ok) {
+      throw new Error(data.error ?? "キー変更に失敗しました。");
+    }
+
+    setStatus(`キーを変更しました: ${data.oldKey} -> ${data.newKey}`);
+    await searchObjects();
+  }
+
   function openModal(type: Exclude<ModalType, null>) {
     setModalType(type);
     setModalOutputBucket(bucket || buckets[0]?.name || "");
+    setModalUploadFile(null);
+    setModalUploadKey("");
     setModalPrompt("");
     setModalSuffix("");
     setModalPrefix("AI生成画像");
     setModalBatch(1);
     setModalScale(4);
+    setRenameTargetKey("");
+    setModalNewKey("");
+  }
+
+  function openRenameModal(key: string) {
+    setModalType("rename");
+    setRenameTargetKey(key);
+    setModalNewKey(key);
   }
 
   function closeModal() {
     setModalType(null);
+    setModalUploadFile(null);
+    setRenameTargetKey("");
+    setModalNewKey("");
   }
 
   async function submitModalTask() {
@@ -409,6 +532,11 @@ export default function Home() {
     setError("");
     setRunningAIAction(true);
     try {
+      if (modalType === "upload") {
+        setStatus("画像を追加中...");
+        await uploadImageObject();
+      }
+
       if (modalType === "generate") {
         setStatus("画像生成タスクを登録中...");
         const response = await fetch(`${API_BASE_URL}/api/v1/ai/generate`, {
@@ -495,6 +623,11 @@ export default function Home() {
           throw new Error(data.error ?? "超解像タスク登録に失敗しました。");
         }
         setStatus(`${data.message} (task: ${data.taskId})`);
+      }
+
+      if (modalType === "rename") {
+        setStatus("キーを変更中...");
+        await renameImageKey();
       }
 
       closeModal();
@@ -680,6 +813,12 @@ export default function Home() {
           <h2>画像一覧 ({objects.length})</h2>
           <div className="action-row">
             <button
+              onClick={() => openModal("upload")}
+              disabled={runningAIAction}
+            >
+              画像追加
+            </button>
+            <button
               onClick={() => openModal("generate")}
               disabled={runningAIAction}
             >
@@ -751,7 +890,32 @@ export default function Home() {
                   </div>
                 </div>
                 <p className="object-key" title={obj.key}>
-                  {obj.key}
+                  <span className="key-row">
+                    <button
+                      className="icon-button"
+                      onClick={() => openRenameModal(obj.key)}
+                      title="キーを編集"
+                      disabled={runningAIAction}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <path
+                          d="M3 17.25V21H6.75L17.8 9.95L14.05 6.2L3 17.25Z"
+                          fill="currentColor"
+                        />
+                        <path
+                          d="M20.7 7.05C21.1 6.65 21.1 6 20.7 5.6L18.4 3.3C18 2.9 17.35 2.9 16.95 3.3L15.1 5.15L18.85 8.9L20.7 7.05Z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                    </button>
+                    <span>{obj.key}</span>
+                  </span>
                 </p>
                 <small className="meta">
                   {obj.size.toLocaleString()} バイト
@@ -829,15 +993,49 @@ export default function Home() {
         <div className="modal-backdrop" onClick={closeModal}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h2>
-              {modalType === "generate"
-                ? "AI画像生成"
-                : modalType === "edit"
-                  ? "AI画像加工"
-                  : "超解像"}
+              {modalType === "upload"
+                ? "画像追加"
+                : modalType === "generate"
+                  ? "AI画像生成"
+                  : modalType === "edit"
+                    ? "AI画像加工"
+                    : modalType === "rename"
+                      ? "キー変更"
+                      : "超解像"}
             </h2>
 
-            {modalType !== "generate" && (
-              <p className="meta">対象画像： {checkedImageKeys.length} 件</p>
+            {modalType !== "generate" &&
+              modalType !== "upload" &&
+              modalType !== "rename" && (
+                <p className="meta">対象画像： {checkedImageKeys.length} 件</p>
+              )}
+
+            {modalType === "upload" && (
+              <>
+                <p className="meta">追加先バケット： {bucket || "未選択"}</p>
+                <label>
+                  アップロードファイル
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/gif,image/webp"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] ?? null;
+                      setModalUploadFile(file);
+                      if (file && !modalUploadKey) {
+                        setModalUploadKey(file.name);
+                      }
+                    }}
+                  />
+                </label>
+                <label>
+                  オブジェクトキー
+                  <input
+                    value={modalUploadKey}
+                    onChange={(e) => setModalUploadKey(e.target.value)}
+                    placeholder="images/new-image.jpg"
+                  />
+                </label>
+              </>
             )}
 
             {modalType === "generate" && (
@@ -939,6 +1137,23 @@ export default function Home() {
                     value={modalSuffix}
                     onChange={(e) => setModalSuffix(e.target.value)}
                     placeholder="upscaled"
+                  />
+                </label>
+              </>
+            )}
+
+            {modalType === "rename" && (
+              <>
+                <label>
+                  変更前キー
+                  <input value={renameTargetKey} readOnly />
+                </label>
+                <label>
+                  変更後キー
+                  <input
+                    value={modalNewKey}
+                    onChange={(e) => setModalNewKey(e.target.value)}
+                    placeholder="images/renamed-image.jpg"
                   />
                 </label>
               </>
