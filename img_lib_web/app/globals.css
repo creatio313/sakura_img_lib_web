@@ -1,0 +1,291 @@
+@import "tailwindcss";
+
+:root {
+  --background: #000000;
+  --foreground: #eaf4fc;
+  --paper: #0d0015;
+  --card: #000000;
+  --ink-subtle: #a22041;
+  --accent: #165e83;
+  --accent-2: #d7003a;
+  --border: #eaf4fc;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.page-shell {
+  min-height: 100vh;
+  width: min(1200px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 1.5rem 0 3rem;
+}
+/***
+ヘッダー部分
+***/
+.hero {
+  margin-bottom: 1.25rem;
+}
+
+.hero h1 {
+  font-size: clamp(1.6rem, 2.8vw, 2.3rem);
+  line-height: 1.15;
+  margin: 0.2rem 0 0.5rem;
+}
+
+.kicker {
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--ink-subtle);
+  font-size: 0.78rem;
+}
+/***
+認証情報・検索入力画面
+***/
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 1rem;
+}
+
+.panel,
+.status-panel,
+.gallery-panel {
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 1rem;
+}
+
+.panel h2,
+.status-panel h2,
+.gallery-head h2 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 0.7rem;
+}
+/***
+フォーム関連
+***/
+label {
+  display: block;
+  font-size: 0.87rem;
+  margin-bottom: 0.65rem;
+}
+
+input,
+select,
+textarea,
+button,
+code {
+  font-family: var(--font-geist-mono), monospace;
+}
+
+input,
+select,
+textarea {
+  color: var(--paper);
+  width: 100%;
+  margin-top: 0.2rem;
+  background: var(--foreground);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.58rem 0.62rem;
+}
+/***
+ボタン
+***/
+button {
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--foreground);
+  padding: 0.58rem 0.9rem;
+  font-size: 0.84rem;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+/***
+ステータス表示、エラー表示画面
+***/
+.status-panel {
+  margin-top: 1rem;
+}
+
+.error-text {
+  color: var(--accent-2);
+}
+/***
+ギャラリー表示。画像とタスク一覧両方に影響。
+***/
+.gallery-panel {
+  margin-top: 1rem;
+}
+
+.gallery-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  margin-bottom: 0.7rem;
+}
+/***
+ギャラリー内アクションボタン配置用
+***/
+.with-actions {
+  flex-wrap: wrap;
+}
+
+.action-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.center-action {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+}
+/*** ギャラリーの画像一覧部分 ***/
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.9rem;
+}
+
+.gallery-item {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  padding: 0.7rem;
+}
+
+.gallery-item input {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.35rem;
+  width: auto;
+  margin: 0;
+}
+
+/*** 画像プレビュー部分 ***/
+.preview-box {
+  aspect-ratio: 4 / 3;
+  border-radius: 9px;
+  overflow: hidden;
+  background: var(--background);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preview-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/*** 画像プレビューできないときのテキスト表示 ***/
+.preview-box span {
+  font-weight: 600;
+  font-size: 0.76rem;
+}
+/*** 画像のオブジェクトキー表示 ***/
+.object-key {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.8rem;
+  margin-top: 0.55rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/*** 画像選択件数表示や容量など汎用小項目表示 ***/
+.meta {
+  color: var(--foreground);
+  font-size: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+/*** ギャラリーのタスク一覧部分 ***/
+.task-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 0.8rem;
+}
+
+.task-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.7rem;
+  background: var(--card);
+}
+
+.task-card h3 {
+  font-size: 0.94rem;
+  margin-bottom: 0.35rem;
+}
+
+.task-subblock {
+  margin-top: 0.55rem;
+}
+
+.strong {
+  font-weight: 700;
+}
+/*** アーティファクト表示 ***/
+.mono {
+  font-family: var(--font-geist-mono), monospace;
+  word-break: break-all;
+}
+/*** モーダル表示 ***/
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 20, 20, 0.46);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+  padding: 1rem;
+}
+
+.modal {
+  width: min(520px, 100%);
+  background: var(--paper);
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  padding: 1rem;
+}
+
+.ghost {
+  background: var(--foreground);
+  color: var(--background);
+}
+
+.danger {
+  background: var(--accent-2);
+}
+
+@media (max-width: 640px) {
+  .page-shell {
+    width: calc(100% - 1rem);
+    padding-top: 1rem;
+  }
+
+  .hero h1 {
+    font-size: 1.45rem;
+  }
+}

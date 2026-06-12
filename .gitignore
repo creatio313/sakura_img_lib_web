@@ -1,0 +1,45 @@
+### dockerサーバ
+docker/go.mod
+docker/go.sum
+
+### Next.js
+
+# dependencies
+img_lib_web/node_modules
+img_lib_web/.pnp
+img_lib_web/.pnp.*
+img_lib_web/.yarn/*
+img_lib_web/!.yarn/patches
+img_lib_web/!.yarn/plugins
+img_lib_web/!.yarn/releases
+img_lib_web/!.yarn/versions
+
+# testing
+img_lib_web/coverage
+
+# next.js
+img_lib_web/.next/
+img_lib_web/out/
+
+# production
+img_lib_web/build
+
+# misc
+.DS_Store
+img_lib_web/*.pem
+
+# debug
+img_lib_web/npm-debug.log*
+img_lib_web/yarn-debug.log*
+img_lib_web/yarn-error.log*
+img_lib_web/.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+img_lib_web/.env*
+
+# vercel
+img_lib_web/.vercel
+
+# typescript
+*.tsbuildinfo
+img_lib_web/next-env.d.ts
