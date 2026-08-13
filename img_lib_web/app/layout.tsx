@@ -16,14 +16,14 @@ export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
   ),
-  title: "画像管理支援システム",
+  title: "画像管理支援電算処理システム",
   description:
     "さくらのクラウドのオブジェクトストレージに格納された画像を管理するためのアプリケーションです。高火力 DOKによるAI画像生成・加工・超解像も可能です。",
   icons: {
     icon: "/favicon.ico",
   },
   openGraph: {
-    title: "画像管理支援システム",
+    title: "画像管理支援電算処理システム",
     description:
       "さくらのクラウドのオブジェクトストレージに格納された画像を管理するためのアプリケーションです。高火力 DOKによるAI画像生成・加工・超解像も可能です。",
     type: "website",
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
         url: "images/ogp/home.jpg",
         width: 1200,
         height: 630,
-        alt: "画像管理支援システム",
+        alt: "画像管理支援電算処理システム",
       },
     ],
   },

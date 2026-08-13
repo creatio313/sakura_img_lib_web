@@ -671,7 +671,7 @@ export default function Home() {
     <main className="page-shell">
       <header className="hero">
         <p className="kicker">DASHBOARD & AI</p>
-        <h1>画像管理支援システム for さくらのクラウド</h1>
+        <h1>画像管理支援電算処理システム for さくらのクラウド</h1>
         <div className="text-white">
           <p>
             さくらのクラウドのオブジェクトストレージ上で画像を管理・操作するためのアプリケーションです。
