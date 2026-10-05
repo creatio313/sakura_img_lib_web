@@ -36,6 +36,7 @@ img_lib_web/.pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
 img_lib_web/.env*
+!img_lib_web/.env.example
 
 # vercel
 img_lib_web/.vercel
