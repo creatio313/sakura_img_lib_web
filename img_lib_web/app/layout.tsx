@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     locale: "ja_JP",
     images: [
       {
-        url: "images/ogp/home.jpg",
+        url: "ogp.jpg",
         width: 1200,
         height: 630,
         alt: "画像管理支援電算処理システム",
@@ -41,8 +41,8 @@ export const metadata: Metadata = {
     card: "summary",
   },
   robots: {
-    index: true,
-    follow: true,
+    index: false,
+    follow: false,
   },
 };
 

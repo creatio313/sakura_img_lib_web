@@ -1,14 +1,10 @@
 @import "tailwindcss";
 
 :root {
-  --background: #000000;
-  --foreground: #eaf4fc;
-  --paper: #0d0015;
-  --card: #000000;
-  --ink-subtle: #a22041;
-  --accent: #165e83;
-  --accent-2: #d7003a;
-  --border: #eaf4fc;
+  --background: #fef4f4;
+  --foreground: #0d0015;
+  --ink-muted: #727171;
+  --border: #fdeff2;
 }
 
 @theme inline {
@@ -18,298 +14,63 @@
   --font-mono: var(--font-geist-mono);
 }
 
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
 }
 
-.page-shell {
-  min-height: 100vh;
-  width: min(1200px, calc(100% - 2rem));
-  margin: 0 auto;
-  padding: 1.5rem 0 3rem;
-}
-/***
-ヘッダー部分
-***/
-.hero {
-  margin-bottom: 1.25rem;
-}
-
-.hero h1 {
-  font-size: clamp(1.6rem, 2.8vw, 2.3rem);
-  line-height: 1.15;
-  margin: 0.2rem 0 0.5rem;
-}
-
-.kicker {
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--ink-subtle);
-  font-size: 0.78rem;
-}
-/***
-認証情報・検索入力画面
-***/
-.card-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
-  gap: 1rem;
-}
-
-.panel,
-.status-panel,
-.gallery-panel {
-  background: var(--paper);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 1rem;
-}
-
-.panel h2,
-.status-panel h2,
-.gallery-head h2 {
-  font-size: 1.05rem;
-  font-weight: 700;
-  margin-bottom: 0.7rem;
-}
-/***
-フォーム関連
-***/
-label {
-  display: block;
-  font-size: 0.87rem;
-  margin-bottom: 0.65rem;
-}
-
-input,
-select,
-textarea,
-button,
-code {
-  font-family: var(--font-geist-mono), monospace;
-}
-
-input,
-select,
-textarea {
-  color: var(--paper);
-  width: 100%;
-  margin-top: 0.2rem;
-  background: var(--foreground);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 0.58rem 0.62rem;
-}
-/***
-ボタン
-***/
-button {
-  border: 0;
-  border-radius: 999px;
-  background: var(--accent);
-  color: var(--foreground);
-  padding: 0.58rem 0.9rem;
-  font-size: 0.84rem;
-  cursor: pointer;
-}
-
 button:disabled {
-  opacity: 0.55;
   cursor: wait;
-}
-/***
-ステータス表示、エラー表示画面
-***/
-.status-panel {
-  margin-top: 1rem;
+  opacity: 0.5;
 }
 
-.error-text {
-  color: var(--accent-2);
-}
-/***
-ギャラリー表示。画像とタスク一覧両方に影響。
-***/
-.gallery-panel {
-  margin-top: 1rem;
-}
-
-.gallery-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.8rem;
-  margin-bottom: 0.7rem;
-}
-/***
-ギャラリー内アクションボタン配置用
-***/
-.with-actions {
-  flex-wrap: wrap;
-}
-
-.action-row {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.center-action {
-  display: flex;
-  justify-content: center;
-  margin-top: 1rem;
-}
-/*** ギャラリーの画像一覧部分 ***/
-.gallery-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 0.9rem;
-}
-
-.gallery-item {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--card);
-  padding: 0.7rem;
-}
-
-.gallery-item input {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  margin-bottom: 0.35rem;
-  width: auto;
-  margin: 0;
-}
-
-/*** 画像プレビュー部分 ***/
-.preview-box {
-  aspect-ratio: 4 / 3;
-  border-radius: 9px;
-  overflow: hidden;
-  background: var(--background);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.preview-box img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-/*** 画像プレビューできないときのテキスト表示 ***/
-.preview-box span {
-  font-weight: 600;
-  font-size: 0.76rem;
-}
-/*** 画像のオブジェクトキー表示 ***/
-.object-key {
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 0.8rem;
-  margin-top: 0.55rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.key-row {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  min-width: 0;
-  width: 100%;
-}
-
-.key-row span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.icon-button {
-  border-radius: 6px;
-  background: transparent;
-  padding: 0.15rem;
-  line-height: 0;
-  flex-shrink: 0;
-}
-
-/*** 画像選択件数表示や容量など汎用小項目表示 ***/
-.meta {
-  color: var(--foreground);
-  font-size: 0.75rem;
-  margin-bottom: 0.5rem;
-}
-
-.strong {
-  font-weight: 700;
-}
-
-/*** タスク一覧テーブル ***/
-.task-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: var(--card);
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.task-table th {
-  background: var(--paper);
-  color: var(--foreground);
-  text-align: left;
-  padding: 0.7rem;
-  font-weight: 600;
-  font-size: 0.85rem;
-}
-
-.task-table td {
-  padding: 0.7rem;
-  border-top: 1px solid var(--border);
-  font-size: 0.85rem;
-}
-
-.task-table tr:hover {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-/*** モーダル表示 ***/
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(20, 20, 20, 0.46);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 60;
-  padding: 1rem;
-}
-
-.modal {
-  width: min(520px, 100%);
-  background: var(--paper);
-  border-radius: 14px;
-  border: 1px solid var(--border);
-  padding: 1rem;
-}
-
-.ghost {
-  background: var(--foreground);
-  color: var(--background);
-}
-
-.danger {
-  background: var(--accent-2);
-}
-
-@media (max-width: 640px) {
-  .page-shell {
-    width: calc(100% - 1rem);
-    padding-top: 1rem;
+@layer base{
+  h2 {
+    @apply text-base font-semibold;
+    color: var(--foreground);
   }
-
-  .hero h1 {
-    font-size: 1.45rem;
+  label{
+    @apply block text-sm/6 font-medium text-gray-900 dark:text-white;
+  }
+  input{
+    @apply block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-red-600 sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:placeholder:text-gray-500 dark:focus:outline-red-500;
+  }
+  textarea{
+    @apply block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-red-600 sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:placeholder:text-gray-500 dark:focus:outline-red-500;
+  }
+  select{
+    @apply w-full appearance-none rounded-md bg-white py-1.5 pr-8 pl-3 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-red-600 sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:*:bg-gray-800 dark:focus-visible:outline-red-500;
+  }
+  button{
+    @apply rounded-full bg-red-600 p-1.5 text-white shadow-xs hover:bg-red-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 dark:bg-red-500 dark:shadow-none dark:hover:bg-red-400 dark:focus-visible:outline-red-500;
+  }
+  table{
+    @apply relative min-w-full divide-y divide-gray-300 dark:divide-white/15;
+  }
+  table thead tr th:first-child{
+    @apply py-3.5 pr-3 pl-4 text-left text-sm font-semibold text-gray-900 sm:pl-0 dark:text-white;
+  }
+  table thead tr th:not(:first-child){
+    @apply px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white;
+  }
+  table tbody{
+    @apply divide-y divide-gray-200 dark:divide-white/10;
+  }
+  table tbody tr td:first-child{
+    @apply py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-0 dark:text-white;
+  }
+  table tbody tr td:not(:first-child){
+    @apply px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400;
   }
 }
